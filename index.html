@@ -1,0 +1,1080 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f8f5ff">
+  <meta name="description" content="A little space to notice how every day feels.">
+  <title>MOODIE — your little mood garden</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #292443;
+      --muted: #77728c;
+      --paper: #fff;
+      --lavender: #eee8ff;
+      --lilac: #c9b9ff;
+      --pink: #ffe4ef;
+      --blue: #dff3ff;
+      --yellow: #fff1bd;
+      --green: #e4f6e8;
+      --line: #eeeaf5;
+      --shadow: 0 20px 60px rgb(68 45 110 / 9%);
+      font-family: "Trebuchet MS", "Avenir Next", system-ui, sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 7% 3%, rgb(238 232 255 / 84%), transparent 29rem),
+        radial-gradient(ellipse at 96% 28%, rgb(255 228 239 / 62%), transparent 28rem),
+        #fbfaff;
+    }
+
+    button, input, textarea { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, input:focus-visible, textarea:focus-visible {
+      outline: 3px solid #9a7df2;
+      outline-offset: 3px;
+    }
+    button:disabled { cursor: not-allowed; opacity: .58; }
+    .hidden { display: none !important; }
+    .app-shell { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 28px 0 56px; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 32px; }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-mark {
+      display: grid;
+      width: 43px;
+      height: 43px;
+      place-items: center;
+      border: 1px solid rgb(255 255 255 / 80%);
+      border-radius: 15px;
+      background: linear-gradient(145deg, #f8d3e6, #d9caff 65%, #d7edff);
+      box-shadow: 0 7px 18px rgb(132 103 187 / 16%);
+      font-size: 23px;
+      transform: rotate(-6deg);
+    }
+    .brand-name { margin: 0; font-size: 22px; font-weight: 900; letter-spacing: .13em; }
+    .brand-note { margin: 2px 0 0; color: var(--muted); font-size: 11px; letter-spacing: .06em; }
+    .connection-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 1px solid #eeebf5;
+      border-radius: 100px;
+      background: rgb(255 255 255 / 75%);
+      color: #77728c;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .03em;
+      white-space: nowrap;
+    }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: #e9bd57; box-shadow: 0 0 0 4px #fff4d2; }
+    .connection-pill[data-status="connected"] { color: #447b55; }
+    .connection-pill[data-status="connected"] .status-dot { background: #64be7c; box-shadow: 0 0 0 4px #e4f6e8; }
+    .connection-pill[data-status="disconnected"] { color: #a45f74; }
+    .connection-pill[data-status="disconnected"] .status-dot { background: #e2879f; box-shadow: 0 0 0 4px #ffe4ef; }
+
+    .dashboard { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(270px, .75fr); gap: 22px; align-items: start; }
+    .main-column, .side-column { display: grid; gap: 22px; min-width: 0; }
+    .card { border: 1px solid rgb(255 255 255 / 95%); border-radius: 27px; background: rgb(255 255 255 / 88%); box-shadow: var(--shadow); }
+    .calendar-card { padding: clamp(20px, 3vw, 32px); }
+    .section-eyebrow { margin: 0 0 7px; color: #948aa8; font-size: 10px; font-weight: 900; letter-spacing: .18em; text-transform: uppercase; }
+    .calendar-heading { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 25px; }
+    h1, h2, h3, p { overflow-wrap: anywhere; }
+    .calendar-heading h1 { margin: 0; font-size: clamp(27px, 4vw, 36px); letter-spacing: -.055em; }
+    .month-controls { display: flex; align-items: center; gap: 10px; }
+    .month-name { min-width: 128px; text-align: center; font-size: 14px; font-weight: 800; }
+    .icon-button {
+      display: grid;
+      width: 36px;
+      height: 36px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fff;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease;
+    }
+    .icon-button:hover { background: #f7f3ff; transform: translateY(-2px); }
+    .weekdays, .calendar-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 9px; }
+    .weekdays { margin-bottom: 11px; }
+    .weekday { color: #aaa4b9; font-size: 10px; font-weight: 900; text-align: center; text-transform: uppercase; }
+    .calendar-day {
+      display: flex;
+      min-width: 0;
+      min-height: 83px;
+      align-items: center;
+      flex-direction: column;
+      gap: 6px;
+      padding: 5px 2px;
+      border: 1px solid transparent;
+      border-radius: 17px;
+      background: transparent;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease, transform .2s ease;
+    }
+    .calendar-day:hover { border-color: #eee8fa; background: #faf8ff; transform: translateY(-2px); }
+    .calendar-day.is-selected { border-color: #d7c8ff; background: #f6f1ff; }
+    .calendar-day.is-today .day-number { color: #8c69dc; font-weight: 900; }
+    .calendar-day.is-outside { opacity: .42; }
+    .day-number { font-size: 11px; font-weight: 700; }
+    .mood-orb {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 2px solid rgb(255 255 255 / 88%);
+      border-radius: 50%;
+      background: var(--orb-color, #f1edfa);
+      box-shadow: 0 4px 11px rgb(49 35 86 / 10%);
+      font-size: 18px;
+      transition: transform .25s cubic-bezier(.2, .8, .2, 1.2);
+    }
+    .calendar-day:hover .mood-orb { transform: scale(1.09) rotate(-5deg); }
+    .mood-orb.is-empty { border: 1px dashed #e2dcec; background: #faf8fd; box-shadow: none; }
+    .day-count { min-height: 11px; color: #988eaa; font-size: 9px; font-weight: 700; }
+    .calendar-legend { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 21px; padding-top: 15px; border-top: 1px solid #f2eef7; color: #938da1; font-size: 10px; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .legend-swatch { width: 12px; height: 12px; border: 1px dashed #d9d2e3; border-radius: 50%; background: #faf8fd; }
+
+    .quote-card { position: relative; overflow: hidden; min-height: 193px; padding: 24px; background: linear-gradient(140deg, #f4edff, #fbeef7 65%, #fff8df); }
+    .quote-card::after { position: absolute; right: 12px; bottom: -30px; content: "✦"; color: rgb(255 255 255 / 66%); font-size: 120px; line-height: 1; transform: rotate(12deg); }
+    .quote-label { position: relative; z-index: 1; margin: 0 0 14px; color: #9688ab; font-size: 10px; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; }
+    .quote-emoji { position: relative; z-index: 1; font-size: 26px; }
+    .quote-text { position: relative; z-index: 1; max-width: 280px; margin: 8px 0 0; font-size: 18px; font-weight: 800; line-height: 1.35; letter-spacing: -.03em; }
+    .quote-caption { position: relative; z-index: 1; margin: 10px 0 0; color: #8f869c; font-size: 11px; }
+
+    .pair-card { padding: 23px; }
+    .pair-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+    .pair-heading h2, .entries-heading h2 { margin: 0; font-size: 17px; letter-spacing: -.035em; }
+    .pair-heading .sparkle { font-size: 21px; }
+    .pair-content { display: grid; grid-template-columns: 102px 1fr; gap: 15px; align-items: center; }
+    .qr-frame { display: grid; width: 102px; height: 102px; place-items: center; overflow: hidden; border: 1px solid #eee8f5; border-radius: 18px; background: white; }
+    #qr-code { display: grid; place-items: center; width: 88px; height: 88px; }
+    #qr-code img, #qr-code canvas { max-width: 88px; max-height: 88px; }
+    .qr-placeholder { color: #b7aec4; font-size: 11px; text-align: center; }
+    .pair-instructions { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .pair-instructions strong { color: var(--ink); }
+    .invite-label { display: block; margin: 16px 0 6px; color: #968da2; font-size: 10px; font-weight: 900; letter-spacing: .11em; text-transform: uppercase; }
+    .invite-row { display: flex; gap: 7px; }
+    .invite-input { width: 100%; min-width: 0; padding: 10px 11px; border: 1px solid #eee9f4; border-radius: 12px; background: #fbfaff; color: #726b82; font-size: 10px; }
+    .copy-button, .reconnect-button {
+      padding: 10px 13px;
+      border: 0;
+      border-radius: 12px;
+      background: #292443;
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .18s ease, background .18s ease;
+      white-space: nowrap;
+    }
+    .copy-button:hover, .reconnect-button:hover { background: #6d58a8; transform: translateY(-1px); }
+    .connection-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 16px; }
+    .connection-help { min-height: 14px; margin: 0; color: #9a92a7; font-size: 10px; line-height: 1.4; }
+    .reconnect-button { padding: 9px 12px; background: #eee9fa; color: #685a89; }
+    .reconnect-button:hover { background: #dfd4fb; }
+    .notice { margin: 10px 0 0; color: #a35b71; font-size: 11px; line-height: 1.45; }
+    .error-banner { margin: 0 0 18px; padding: 12px 15px; border: 1px solid #f4d0dc; border-radius: 14px; background: #fff1f5; color: #8b4058; font-size: 12px; line-height: 1.5; }
+    .entries-card { padding: 22px; }
+    .entries-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+    .entry-date-label { color: #948aa8; font-size: 10px; font-weight: 800; text-align: right; }
+    .entries-list { display: grid; gap: 9px; max-height: 300px; overflow: auto; }
+    .empty-note { margin: 0; padding: 14px; border-radius: 15px; background: #faf8fd; color: #938ca0; font-size: 12px; line-height: 1.55; }
+    .entry-item { padding: 13px; border: 1px solid #f0ecf5; border-radius: 17px; background: #fff; animation: pop-in .3s ease both; }
+    .entry-topline { display: flex; align-items: center; gap: 8px; }
+    .entry-emoji { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: var(--entry-color, #f3edff); font-size: 17px; }
+    .entry-word { margin: 0; font-size: 13px; font-weight: 900; }
+    .entry-time { margin-left: auto; color: #aaa3b5; font-size: 9px; white-space: nowrap; }
+    .entry-summary { margin: 9px 0 0; color: #716b80; font-size: 11px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .entry-summary:empty { display: none; }
+    .entry-color-label { margin-left: 42px; color: #a19aac; font-size: 9px; }
+
+    .phone-layout { display: grid; grid-template-columns: minmax(0, 460px) minmax(230px, 320px); justify-content: center; align-items: start; gap: 25px; }
+    .phone-card { padding: clamp(21px, 5vw, 34px); }
+    .phone-intro { margin-bottom: 22px; text-align: center; }
+    .phone-hero-emoji { display: inline-grid; width: 68px; height: 68px; place-items: center; border: 3px solid white; border-radius: 24px; background: linear-gradient(135deg, var(--pink), var(--lavender), var(--blue)); box-shadow: 0 10px 24px rgb(88 64 137 / 12%); font-size: 36px; transform: rotate(-4deg); }
+    .phone-intro h1 { margin: 12px 0 5px; font-size: 30px; letter-spacing: -.06em; }
+    .phone-intro p { margin: 0; color: var(--muted); font-size: 13px; }
+    .form-field { margin-top: 20px; }
+    .field-label { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 9px; color: #5d566f; font-size: 11px; font-weight: 900; letter-spacing: .07em; text-transform: uppercase; }
+    .field-hint { color: #a49bad; font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+    .emoji-choice {
+      display: grid;
+      min-width: 0;
+      min-height: 58px;
+      place-items: center;
+      border: 1px solid #eee9f4;
+      border-radius: 17px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 26px;
+      transition: border-color .18s ease, background .18s ease, transform .18s ease;
+    }
+    .emoji-choice:hover { transform: translateY(-2px); }
+    .emoji-choice[aria-pressed="true"] { border-color: #b9a2ff; background: #f2ecff; box-shadow: 0 0 0 3px rgb(207 190 255 / 24%); transform: translateY(-2px) rotate(-3deg); }
+    .color-row { display: flex; align-items: center; gap: 10px; }
+    .color-input { width: 45px; height: 45px; padding: 3px; border: 1px solid #eee9f4; border-radius: 14px; background: #fff; cursor: pointer; }
+    .color-input::-webkit-color-swatch-wrapper { padding: 2px; }
+    .color-input::-webkit-color-swatch { border: 0; border-radius: 9px; }
+    .color-note { color: #948da0; font-size: 11px; line-height: 1.45; }
+    .text-input, .text-area {
+      display: block;
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid #ebe6f2;
+      border-radius: 15px;
+      background: #fdfcff;
+      color: var(--ink);
+      font-size: 14px;
+      transition: border-color .18s ease, box-shadow .18s ease;
+    }
+    .text-input:focus, .text-area:focus { border-color: #b9a2ff; box-shadow: 0 0 0 3px rgb(207 190 255 / 22%); outline: none; }
+    .text-area { min-height: 98px; resize: vertical; font-size: 13px; line-height: 1.5; }
+    .submit-button {
+      display: flex;
+      width: 100%;
+      min-height: 54px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 23px;
+      border: 0;
+      border-radius: 17px;
+      background: linear-gradient(100deg, #c9b9ff, #f4c9e2 65%, #ffdcaa);
+      box-shadow: 0 9px 20px rgb(167 129 214 / 23%);
+      color: #302747;
+      font-size: 14px;
+      font-weight: 900;
+      cursor: pointer;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .submit-button:hover { box-shadow: 0 12px 23px rgb(167 129 214 / 30%); transform: translateY(-2px); }
+    .submit-button:active { transform: translateY(1px) scale(.99); }
+    .phone-feedback { min-height: 18px; margin: 12px 0 0; color: #716988; font-size: 11px; line-height: 1.5; text-align: center; }
+    .phone-side { padding: 21px; }
+    .phone-side h2 { margin: 0 0 7px; font-size: 16px; letter-spacing: -.03em; }
+    .phone-side > p { margin: 0 0 16px; color: #938ca0; font-size: 11px; line-height: 1.5; }
+    .phone-quote { padding: 16px; border-radius: 17px; background: linear-gradient(140deg, #f4edff, #fff1f8); }
+    .phone-quote .quote-emoji { font-size: 22px; }
+    .phone-quote .quote-text { font-size: 14px; }
+    .phone-quote .quote-caption { font-size: 10px; }
+    .phone-entries { display: grid; gap: 8px; max-height: 255px; margin-top: 16px; overflow: auto; }
+    .phone-entry { padding: 10px; border-radius: 13px; background: #fbf9fe; }
+    .phone-entry strong { font-size: 11px; }
+    .phone-entry p { margin: 5px 0 0; color: #827b91; font-size: 10px; line-height: 1.4; }
+    .role-footer { margin-top: 19px; color: #a29bab; font-size: 10px; line-height: 1.5; text-align: center; }
+    .confetti { display: inline-block; animation: pop-in .4s ease both; }
+    @keyframes pop-in { from { opacity: 0; transform: translateY(7px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    @media (max-width: 790px) {
+      .dashboard { grid-template-columns: minmax(0, 1.3fr) minmax(240px, .8fr); gap: 15px; }
+      .main-column, .side-column { gap: 15px; }
+      .calendar-card { padding: 21px 17px; }
+      .calendar-grid, .weekdays { gap: 4px; }
+      .calendar-day { min-height: 73px; }
+      .mood-orb { width: 32px; height: 32px; font-size: 16px; }
+      .pair-content { grid-template-columns: 82px 1fr; gap: 10px; }
+      .qr-frame { width: 82px; height: 82px; }
+      #qr-code { width: 70px; height: 70px; }
+      #qr-code img, #qr-code canvas { max-width: 70px; max-height: 70px; }
+      .pair-card { padding: 18px; }
+    }
+    @media (max-width: 620px) {
+      .app-shell { width: min(100% - 26px, 470px); padding: 16px 0 36px; }
+      .topbar { margin-bottom: 19px; }
+      .brand-mark { width: 39px; height: 39px; border-radius: 14px; font-size: 21px; }
+      .brand-name { font-size: 19px; }
+      .brand-note { font-size: 9px; }
+      .connection-pill { min-height: 34px; padding: 7px 10px; font-size: 10px; }
+      .dashboard, .phone-layout { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+      .main-column, .side-column { gap: 14px; }
+      .calendar-heading { align-items: center; }
+      .calendar-heading h1 { font-size: 28px; }
+      .month-name { min-width: 105px; font-size: 12px; }
+      .weekdays, .calendar-grid { gap: 3px; }
+      .weekday { font-size: 9px; }
+      .calendar-day { min-height: 68px; padding-top: 4px; }
+      .mood-orb { width: 31px; height: 31px; font-size: 15px; }
+      .day-number { font-size: 10px; }
+      .calendar-legend { font-size: 9px; }
+      .side-column { grid-row: 2; }
+      .pair-content { grid-template-columns: 88px 1fr; }
+      .qr-frame { width: 88px; height: 88px; }
+      #qr-code { width: 74px; height: 74px; }
+      #qr-code img, #qr-code canvas { max-width: 74px; max-height: 74px; }
+      .phone-layout { width: min(100%, 460px); margin: 0 auto; }
+      .phone-card { padding: 22px 18px; }
+      .phone-side { padding: 18px; }
+      .phone-entries { max-height: 190px; }
+      .quote-card { min-height: 167px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Moodie">
+        <div class="brand-mark" aria-hidden="true">☁️</div>
+        <div>
+          <p class="brand-name">MOODIE</p>
+          <p class="brand-note">a little space for your feelings</p>
+        </div>
+      </div>
+      <div id="connection-pill" class="connection-pill" data-status="waiting" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="connection-label">Waiting for your phone</span>
+      </div>
+    </header>
+
+    <main>
+      <section id="computer-view" class="dashboard" aria-label="Mood calendar dashboard">
+        <div id="storage-error" class="error-banner hidden" role="alert"></div>
+        <div class="main-column">
+          <section class="card calendar-card" aria-labelledby="calendar-title">
+            <div class="calendar-heading">
+              <div>
+                <p class="section-eyebrow">your feelings, in full bloom</p>
+                <h1 id="calendar-title">Mood garden</h1>
+              </div>
+              <div class="month-controls" aria-label="Calendar month controls">
+                <button id="previous-month" class="icon-button" type="button" aria-label="Previous month">‹</button>
+                <span id="month-name" class="month-name"></span>
+                <button id="next-month" class="icon-button" type="button" aria-label="Next month">›</button>
+              </div>
+            </div>
+            <div class="weekdays" aria-hidden="true">
+              <span class="weekday">Sun</span><span class="weekday">Mon</span><span class="weekday">Tue</span>
+              <span class="weekday">Wed</span><span class="weekday">Thu</span><span class="weekday">Fri</span><span class="weekday">Sat</span>
+            </div>
+            <div id="calendar-grid" class="calendar-grid" role="grid" aria-label="Mood calendar"></div>
+            <div class="calendar-legend">
+              <span class="legend-item"><span class="legend-swatch" aria-hidden="true"></span> No mood added yet</span>
+              <span>Pick a day to look back ✨</span>
+            </div>
+          </section>
+
+          <section class="card entries-card" aria-labelledby="entries-title">
+            <div class="entries-heading">
+              <h2 id="entries-title">Little look-back</h2>
+              <span id="selected-date-label" class="entry-date-label"></span>
+            </div>
+            <div id="entries-list" class="entries-list"></div>
+          </section>
+        </div>
+
+        <aside class="side-column" aria-label="Pairing and inspiration">
+          <section class="card quote-card" aria-labelledby="quote-title">
+            <p id="quote-title" class="quote-label">a little note for you</p>
+            <div id="quote-emoji" class="quote-emoji" aria-hidden="true">✨</div>
+            <p id="quote-text" class="quote-text">Every feeling is allowed to visit. You get to choose how long it stays.</p>
+            <p id="quote-caption" class="quote-caption">A gentle reminder for today</p>
+          </section>
+
+          <section class="card pair-card" aria-labelledby="pair-title">
+            <div class="pair-heading">
+              <h2 id="pair-title">Bring your phone close</h2>
+              <span class="sparkle" aria-hidden="true">✷</span>
+            </div>
+            <div class="pair-content">
+              <div class="qr-frame">
+                <div id="qr-code" aria-label="Phone pairing QR code"><span class="qr-placeholder">Making<br>your QR ✨</span></div>
+              </div>
+              <p class="pair-instructions">Scan to open your mood space on your phone. Both screens need to stay open to keep your garden in sync.</p>
+            </div>
+            <label class="invite-label" for="invite-link">Or copy your phone link</label>
+            <div class="invite-row">
+              <input id="invite-link" class="invite-input" type="text" readonly aria-label="Phone pairing link">
+              <button id="copy-link" class="copy-button" type="button">Copy</button>
+            </div>
+            <div class="connection-footer">
+              <p id="connection-help" class="connection-help">Waiting for your phone to join…</p>
+              <button id="reconnect-button" class="reconnect-button" type="button">Reconnect</button>
+            </div>
+            <p id="qr-notice" class="notice hidden" role="alert"></p>
+          </section>
+        </aside>
+      </section>
+
+      <section id="phone-view" class="phone-layout hidden" aria-label="Phone mood entry">
+        <div>
+          <section class="card phone-card">
+            <div class="phone-intro">
+              <span class="phone-hero-emoji" aria-hidden="true">🌷</span>
+              <h1>How's your heart?</h1>
+              <p>Pause for a tiny check-in with yourself.</p>
+            </div>
+            <form id="mood-form">
+              <div class="form-field">
+                <p class="field-label"><span>Pick your mood</span><span class="field-hint">choose one</span></p>
+                <div id="emoji-grid" class="emoji-grid" role="group" aria-label="Choose an emoji for your mood"></div>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="mood-color"><span>Your color today</span></label>
+                <div class="color-row">
+                  <input id="mood-color" class="color-input" type="color" value="#c9b9ff" aria-label="Choose a color for your mood">
+                  <span class="color-note">Pick the shade that feels like you. Every day can be a different color.</span>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="mood-date"><span>Day</span></label>
+                <input id="mood-date" class="text-input" type="date" required>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="mood-word"><span>One word for today</span><span class="field-hint">up to 40 characters</span></label>
+                <input id="mood-word" class="text-input" type="text" maxlength="40" placeholder="e.g. hopeful, sleepy, brave…" autocomplete="off" required>
+              </div>
+              <div class="form-field">
+                <label class="field-label" for="mood-summary"><span>A little more, if you like</span><span class="field-hint">optional</span></label>
+                <textarea id="mood-summary" class="text-area" maxlength="500" placeholder="What made today feel this way? Leave a note for future you…"></textarea>
+              </div>
+              <button class="submit-button" type="submit"><span aria-hidden="true">✦</span> Add to my mood garden <span aria-hidden="true">✦</span></button>
+              <p id="phone-feedback" class="phone-feedback" role="status" aria-live="polite"></p>
+            </form>
+          </section>
+          <p class="role-footer">Your little check-in is sent directly to your computer. No camera or sensors needed.</p>
+        </div>
+        <aside class="card phone-side" aria-label="Your inspiration and recent moods">
+          <h2>A soft thought for today</h2>
+          <p>A little encouragement, picked for your feeling.</p>
+          <div class="phone-quote">
+            <div id="phone-quote-emoji" class="quote-emoji" aria-hidden="true">✨</div>
+            <p id="phone-quote-text" class="quote-text">Every feeling is allowed to visit. You get to choose how long it stays.</p>
+            <p id="phone-quote-caption" class="quote-caption">A gentle reminder for today</p>
+          </div>
+          <div id="phone-entries" class="phone-entries" aria-label="Your recent check-ins"></div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const STORAGE_KEY = "moodie.entries.v1";
+      const MAX_SUMMARY_LENGTH = 500;
+      const MOODS = [
+        { emoji: "🌞", label: "sunny", color: "#ffe59b" },
+        { emoji: "😊", label: "happy", color: "#ffd8a8" },
+        { emoji: "🥰", label: "loved", color: "#ffc9df" },
+        { emoji: "😌", label: "calm", color: "#ccebdd" },
+        { emoji: "😴", label: "sleepy", color: "#d8d1ff" },
+        { emoji: "😰", label: "anxious", color: "#bfe5f5" },
+        { emoji: "😢", label: "sad", color: "#b9d7ff" },
+        { emoji: "😡", label: "angry", color: "#ffb9b2" },
+        { emoji: "🤔", label: "thoughtful", color: "#ead9f5" },
+        { emoji: "🌧️", label: "low", color: "#c6c8ed" }
+      ];
+      const QUOTES = {
+        "🌞": "Your light doesn't have to be loud to make the day warmer.",
+        "😊": "Let this little pocket of joy be enough for right now.",
+        "🥰": "The care you give and receive is something worth keeping.",
+        "😌": "You are allowed to rest inside a quiet moment.",
+        "😴": "Rest is not falling behind. It's part of becoming.",
+        "😰": "One breath, then the next. You only have to meet this moment.",
+        "😢": "Soft days count too. You don't have to turn this into a lesson.",
+        "😡": "Your feelings are real; give yourself room to meet them gently.",
+        "🤔": "You can take your time finding the shape of what you feel.",
+        "🌧️": "Cloudy skies are still part of the same wide, changing sky."
+      };
+
+      const elements = {
+        computer: document.querySelector("#computer-view"),
+        phone: document.querySelector("#phone-view"),
+        pill: document.querySelector("#connection-pill"),
+        connectionLabel: document.querySelector("#connection-label"),
+        connectionHelp: document.querySelector("#connection-help"),
+        reconnect: document.querySelector("#reconnect-button"),
+        calendarGrid: document.querySelector("#calendar-grid"),
+        monthName: document.querySelector("#month-name"),
+        entriesList: document.querySelector("#entries-list"),
+        selectedDateLabel: document.querySelector("#selected-date-label"),
+        quoteEmoji: document.querySelector("#quote-emoji"),
+        quoteText: document.querySelector("#quote-text"),
+        quoteCaption: document.querySelector("#quote-caption"),
+        inviteLink: document.querySelector("#invite-link"),
+        qrCode: document.querySelector("#qr-code"),
+        qrNotice: document.querySelector("#qr-notice"),
+        copyLink: document.querySelector("#copy-link"),
+        storageError: document.querySelector("#storage-error"),
+        emojiGrid: document.querySelector("#emoji-grid"),
+        moodColor: document.querySelector("#mood-color"),
+        moodDate: document.querySelector("#mood-date"),
+        moodWord: document.querySelector("#mood-word"),
+        moodSummary: document.querySelector("#mood-summary"),
+        moodForm: document.querySelector("#mood-form"),
+        phoneFeedback: document.querySelector("#phone-feedback"),
+        phoneEntries: document.querySelector("#phone-entries"),
+        phoneQuoteEmoji: document.querySelector("#phone-quote-emoji"),
+        phoneQuoteText: document.querySelector("#phone-quote-text"),
+        phoneQuoteCaption: document.querySelector("#phone-quote-caption")
+      };
+
+      const joinId = new URLSearchParams(window.location.search).get("join");
+      const role = joinId ? "phone" : "computer";
+      const today = new Date();
+      const localDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      };
+      let selectedEmoji = MOODS[0].emoji;
+      let selectedDate = localDate(today);
+      let visibleMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let entries = [];
+      let peer = null;
+      let connection = null;
+      let peerReady = false;
+      let reconnecting = false;
+      const pendingMessages = new Map();
+
+      const formatDate = (dateString, options = { month: "long", day: "numeric", year: "numeric" }) => {
+        const date = new Date(`${dateString}T12:00:00`);
+        return Number.isNaN(date.getTime()) ? dateString : new Intl.DateTimeFormat(undefined, options).format(date);
+      };
+
+      function setStatus(status, label, help) {
+        elements.pill.dataset.status = status;
+        elements.connectionLabel.textContent = label;
+        if (elements.connectionHelp) elements.connectionHelp.textContent = help;
+      }
+
+      function showStorageError(message) {
+        elements.storageError.textContent = message;
+        elements.storageError.classList.remove("hidden");
+      }
+
+      function validateEntry(value) {
+        if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+        const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+        const mood = MOODS.find((item) => item.emoji === value.emoji);
+        const parsedDate = typeof value.date === "string" && datePattern.test(value.date)
+          ? new Date(`${value.date}T12:00:00`)
+          : null;
+        if (!mood || !parsedDate || Number.isNaN(parsedDate.getTime()) || localDate(parsedDate) !== value.date) return null;
+        if (typeof value.id !== "string" || value.id.length > 100) return null;
+        if (typeof value.word !== "string" || !value.word.trim() || value.word.length > 40) return null;
+        if (typeof value.summary !== "string" || value.summary.length > MAX_SUMMARY_LENGTH) return null;
+        if (typeof value.color !== "string" || !/^#[0-9a-f]{6}$/i.test(value.color)) return null;
+        if (typeof value.createdAt !== "string" || Number.isNaN(Date.parse(value.createdAt))) return null;
+        return {
+          id: value.id,
+          date: value.date,
+          emoji: value.emoji,
+          color: value.color,
+          word: value.word.trim(),
+          summary: value.summary,
+          createdAt: value.createdAt
+        };
+      }
+
+      function loadEntries() {
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          if (!stored) return [];
+          const parsed = JSON.parse(stored);
+          if (!Array.isArray(parsed)) throw new Error("Saved mood data is not a list.");
+          const validEntries = parsed.map(validateEntry).filter(Boolean);
+          if (validEntries.length !== parsed.length) {
+            showStorageError("Some saved mood notes couldn't be read, so those entries were skipped. New notes will still save.");
+          }
+          return validEntries;
+        } catch (error) {
+          showStorageError(`Saved moods couldn't be loaded: ${error.message}`);
+          return [];
+        }
+      }
+
+      function saveEntries() {
+        try {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+          elements.storageError.classList.add("hidden");
+        } catch (error) {
+          showStorageError(`This mood was received, but couldn't be saved in this browser: ${error.message}`);
+        }
+      }
+
+      function entriesForDate(date) {
+        return entries
+          .filter((entry) => entry.date === date)
+          .sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
+      }
+
+      function latestEntryForDate(date) {
+        const matching = entriesForDate(date);
+        return matching[matching.length - 1] || null;
+      }
+
+      function renderCalendar() {
+        elements.monthName.textContent = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(visibleMonth);
+        elements.calendarGrid.replaceChildren();
+        const monthStart = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
+        const firstVisible = new Date(monthStart.getFullYear(), monthStart.getMonth(), 1 - monthStart.getDay());
+        const todayString = localDate(new Date());
+        for (let index = 0; index < 42; index += 1) {
+          const day = new Date(firstVisible.getFullYear(), firstVisible.getMonth(), firstVisible.getDate() + index);
+          const dateString = localDate(day);
+          const dayEntries = entriesForDate(dateString);
+          const latest = dayEntries[dayEntries.length - 1];
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "calendar-day";
+          button.setAttribute("role", "gridcell");
+          button.setAttribute("aria-label", `${formatDate(dateString)}${latest ? `, ${latest.word}, ${dayEntries.length} ${dayEntries.length === 1 ? "mood" : "moods"}` : ", no mood added"}`);
+          if (day.getMonth() !== visibleMonth.getMonth()) button.classList.add("is-outside");
+          if (dateString === todayString) button.classList.add("is-today");
+          if (dateString === selectedDate) button.classList.add("is-selected");
+          const number = document.createElement("span");
+          number.className = "day-number";
+          number.textContent = String(day.getDate());
+          const orb = document.createElement("span");
+          orb.className = `mood-orb${latest ? "" : " is-empty"}`;
+          if (latest) {
+            orb.style.setProperty("--orb-color", latest.color);
+            orb.textContent = latest.emoji;
+            orb.setAttribute("aria-hidden", "true");
+          } else {
+            orb.textContent = "";
+            orb.setAttribute("aria-hidden", "true");
+          }
+          const count = document.createElement("span");
+          count.className = "day-count";
+          count.textContent = dayEntries.length > 1 ? `${dayEntries.length} notes` : "";
+          button.append(number, orb, count);
+          button.addEventListener("click", () => {
+            selectedDate = dateString;
+            renderCalendar();
+            renderSelectedEntries();
+          });
+          elements.calendarGrid.append(button);
+        }
+      }
+
+      function renderSelectedEntries() {
+        const selectedEntries = entriesForDate(selectedDate);
+        elements.selectedDateLabel.textContent = formatDate(selectedDate, { month: "short", day: "numeric" });
+        elements.entriesList.replaceChildren();
+        if (!selectedEntries.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-note";
+          empty.textContent = "No notes for this day yet. Pick up your phone and leave a little mood for future you.";
+          elements.entriesList.append(empty);
+          return;
+        }
+        selectedEntries.slice().reverse().forEach((entry) => {
+          const card = document.createElement("article");
+          card.className = "entry-item";
+          const top = document.createElement("div");
+          top.className = "entry-topline";
+          const emoji = document.createElement("span");
+          emoji.className = "entry-emoji";
+          emoji.style.setProperty("--entry-color", entry.color);
+          emoji.textContent = entry.emoji;
+          emoji.setAttribute("aria-hidden", "true");
+          const word = document.createElement("p");
+          word.className = "entry-word";
+          word.textContent = entry.word;
+          const time = document.createElement("time");
+          time.className = "entry-time";
+          time.dateTime = entry.createdAt;
+          time.textContent = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }).format(new Date(entry.createdAt));
+          top.append(emoji, word, time);
+          const color = document.createElement("div");
+          color.className = "entry-color-label";
+          color.textContent = entry.color.toUpperCase();
+          const summary = document.createElement("p");
+          summary.className = "entry-summary";
+          summary.textContent = entry.summary;
+          card.append(top, color, summary);
+          elements.entriesList.append(card);
+        });
+      }
+
+      function setQuote(emoji, word, captionTarget = "computer") {
+        const quote = QUOTES[emoji] || "Every feeling is allowed to visit. You get to choose how long it stays.";
+        const isPhone = captionTarget === "phone";
+        const emojiTarget = isPhone ? elements.phoneQuoteEmoji : elements.quoteEmoji;
+        const textTarget = isPhone ? elements.phoneQuoteText : elements.quoteText;
+        const caption = isPhone ? elements.phoneQuoteCaption : elements.quoteCaption;
+        emojiTarget.textContent = emoji || "✨";
+        textTarget.textContent = quote;
+        caption.textContent = word ? `For the ${word} feeling` : "A gentle reminder for today";
+        if (!isPhone && elements.phoneQuoteEmoji) {
+          elements.phoneQuoteEmoji.textContent = emoji || "✨";
+          elements.phoneQuoteText.textContent = quote;
+          elements.phoneQuoteCaption.textContent = word ? `For the ${word} feeling` : "A gentle reminder for today";
+        }
+      }
+
+      function updateLatestQuote() {
+        const latest = entries.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0];
+        setQuote(latest ? latest.emoji : "", latest ? latest.word : "");
+      }
+
+      function renderPhoneEntries() {
+        elements.phoneEntries.replaceChildren();
+        const recent = entries.slice().sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)).slice(0, 5);
+        if (!recent.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-note";
+          empty.textContent = "Your little moments will show up here after they're sent.";
+          elements.phoneEntries.append(empty);
+          return;
+        }
+        recent.forEach((entry) => {
+          const note = document.createElement("article");
+          note.className = "phone-entry";
+          const title = document.createElement("strong");
+          title.textContent = `${entry.emoji} ${entry.word} · ${formatDate(entry.date, { month: "short", day: "numeric" })}`;
+          const summary = document.createElement("p");
+          summary.textContent = entry.summary || "A little mood, saved.";
+          note.append(title, summary);
+          elements.phoneEntries.append(note);
+        });
+      }
+
+      function addEntry(value) {
+        const entry = validateEntry(value);
+        if (!entry) return false;
+        if (entries.some((existing) => existing.id === entry.id)) return true;
+        entries.push(entry);
+        saveEntries();
+        selectedDate = entry.date;
+        visibleMonth = new Date(`${entry.date}T12:00:00`);
+        renderCalendar();
+        renderSelectedEntries();
+        updateLatestQuote();
+        if (role === "phone") renderPhoneEntries();
+        return true;
+      }
+
+      function setPhoneFeedback(message, isError = false) {
+        elements.phoneFeedback.textContent = message;
+        elements.phoneFeedback.style.color = isError ? "#a35b71" : "#716988";
+      }
+
+      function createMessage(type, payload) {
+        return JSON.stringify({ type, payload });
+      }
+
+      function sendMessage(type, payload) {
+        if (!connection || !connection.open) return false;
+        try {
+          connection.send(createMessage(type, payload));
+          return true;
+        } catch (error) {
+          setStatus("disconnected", "Disconnected", `Couldn't send: ${error.message}`);
+          return false;
+        }
+      }
+
+      function flushPendingMessages() {
+        if (!connection || !connection.open) return;
+        for (const [id, entry] of pendingMessages) {
+          if (!sendMessage("mood", entry)) break;
+        }
+        if (role === "phone" && pendingMessages.size === 0) setPhoneFeedback("You're all synced up ✨");
+      }
+
+      function handleMessage(message) {
+        if (!message || typeof message !== "object" || typeof message.type !== "string") {
+          setStatus("connected", "Connected", "Received a message in an unexpected format.");
+          return;
+        }
+        if (role === "computer" && message.type === "mood") {
+          const entry = validateEntry(message.payload);
+          if (!entry) {
+            setStatus("connected", "Connected", "A mood couldn't be added because some details were invalid.");
+            return;
+          }
+          const wasNew = !entries.some((existing) => existing.id === entry.id);
+          if (wasNew) addEntry(entry);
+          sendMessage("ack", { id: entry.id });
+          const quote = QUOTES[entry.emoji];
+          sendMessage("quote", { emoji: entry.emoji, word: entry.word, text: quote });
+          if (wasNew) {
+            setStatus("connected", "Connected", "Your mood garden just bloomed ✨");
+          }
+          return;
+        }
+        if (role === "phone" && message.type === "ack" && message.payload && typeof message.payload.id === "string") {
+          pendingMessages.delete(message.payload.id);
+          const confirmed = entries.find((entry) => entry.id === message.payload.id);
+          if (confirmed) renderPhoneEntries();
+          if (pendingMessages.size === 0) setPhoneFeedback("Added to your mood garden ✨");
+          return;
+        }
+        if (role === "phone" && message.type === "quote" && message.payload && typeof message.payload.emoji === "string") {
+          setQuote(message.payload.emoji, typeof message.payload.word === "string" ? message.payload.word : "", "phone");
+          return;
+        }
+        if (role === "phone" && message.type === "hello") {
+          setPhoneFeedback("Your computer found you — you're connected ✨");
+        }
+      }
+
+      function bindConnection(nextConnection) {
+        connection = nextConnection;
+        connection.on("open", () => {
+          setStatus("connected", "Connected", role === "computer" ? "Your phone is in the garden ✨" : "Connected to your computer ✨");
+          if (role === "computer") sendMessage("hello", { app: "moodie" });
+          if (role === "phone") flushPendingMessages();
+        });
+        connection.on("data", handleMessage);
+        connection.on("close", () => {
+          if (connection !== nextConnection) return;
+          connection = null;
+          setStatus("disconnected", "Disconnected", role === "computer" ? "Your phone left. Tap Reconnect when you're ready." : "Your computer connection closed. Tap Reconnect to try again.");
+          if (role === "phone" && pendingMessages.size) setPhoneFeedback("Your note is saved here for this session and will retry when you reconnect.");
+        });
+        connection.on("error", (error) => {
+          setStatus("disconnected", "Disconnected", `Connection issue: ${error.message}`);
+        });
+      }
+
+      function connectPhone() {
+        if (!peer || peer.destroyed || !peerReady || reconnecting) return;
+        reconnecting = true;
+        if (connection) {
+          connection.removeAllListeners();
+          connection.close();
+          connection = null;
+        }
+        setStatus("waiting", "Connecting…", "Reaching your computer…");
+        try {
+          bindConnection(peer.connect(joinId, { reliable: true }));
+        } catch (error) {
+          setStatus("disconnected", "Disconnected", `Couldn't reconnect: ${error.message}`);
+        } finally {
+          reconnecting = false;
+        }
+      }
+
+      function initializePeer() {
+        if (typeof window.Peer !== "function") {
+          setStatus("disconnected", "Disconnected", "PeerJS couldn't load. Check your internet connection and reload.");
+          if (role === "computer") elements.qrNotice.textContent = "PeerJS didn't load. Check your internet connection and reload to create a pairing link.";
+          if (role === "phone") setPhoneFeedback("PeerJS didn't load. Check your connection, then reload this page.", true);
+          if (role === "computer") elements.qrNotice.classList.remove("hidden");
+          return;
+        }
+        try {
+          peer = new window.Peer();
+        } catch (error) {
+          setStatus("disconnected", "Disconnected", `Peer setup failed: ${error.message}`);
+          return;
+        }
+        peer.on("open", (id) => {
+          peerReady = true;
+          if (role === "computer") {
+            const invite = new URL(window.location.href);
+            invite.search = "";
+            invite.searchParams.set("join", id);
+            elements.inviteLink.value = invite.toString();
+            elements.qrCode.replaceChildren();
+            if (typeof window.QRCode === "function") {
+              new window.QRCode(elements.qrCode, {
+                text: invite.toString(),
+                width: 88,
+                height: 88,
+                colorDark: "#292443",
+                colorLight: "#ffffff",
+                correctLevel: window.QRCode.CorrectLevel.M
+              });
+            } else {
+              elements.qrCode.innerHTML = '<span class="qr-placeholder">QR library<br>unavailable</span>';
+              elements.qrNotice.textContent = "The QR code library didn't load. You can still copy the phone link below.";
+              elements.qrNotice.classList.remove("hidden");
+            }
+            if (!connection) setStatus("waiting", "Waiting for your phone", `Your pairing code is ready. Share the link or scan the QR code.`);
+          } else {
+            setStatus("waiting", "Connecting…", "Reaching your computer…");
+            bindConnection(peer.connect(joinId, { reliable: true }));
+          }
+        });
+        peer.on("connection", (incoming) => {
+          if (role !== "computer") return;
+          if (connection && connection.open) {
+            incoming.close();
+            return;
+          }
+          bindConnection(incoming);
+        });
+        peer.on("disconnected", () => {
+          peerReady = false;
+          if (role === "computer") setStatus("disconnected", "Disconnected", "Peer server connection lost. Tap Reconnect to restore it.");
+        });
+        peer.on("close", () => {
+          peerReady = false;
+          setStatus("disconnected", "Disconnected", "Peer connection ended. Tap Reconnect to start again.");
+        });
+        peer.on("error", (error) => {
+          const help = error.type === "peer-unavailable"
+            ? "Couldn't find that computer. Make sure its Moodie page is open, then tap Reconnect."
+            : `Connection issue: ${error.message}`;
+          setStatus("disconnected", "Disconnected", help);
+          if (role === "phone") setPhoneFeedback(help, true);
+          if (role === "computer") {
+            elements.qrNotice.textContent = `Peer error: ${error.message}`;
+            elements.qrNotice.classList.remove("hidden");
+          }
+        });
+      }
+
+      function reconnect() {
+        if (typeof window.Peer !== "function") {
+          setStatus("disconnected", "Disconnected", "PeerJS couldn't load. Check your internet connection and reload.");
+          return;
+        }
+        if (!peer || peer.destroyed) {
+          peerReady = false;
+          connection = null;
+          initializePeer();
+          return;
+        }
+        if (connection && connection.open) {
+          setStatus("connected", "Connected", "You're already in sync ✨");
+          return;
+        }
+        if (role === "phone") {
+          if (peer.disconnected) peer.reconnect();
+          if (peerReady) connectPhone();
+          else setStatus("waiting", "Connecting…", "Waking your Moodie link…");
+          return;
+        }
+        if (peer.disconnected) {
+          setStatus("waiting", "Reconnecting…", "Restoring your pairing link…");
+          peer.reconnect();
+        } else {
+          setStatus("waiting", "Waiting for your phone", "Your pairing link is ready. Scan it to reconnect.");
+        }
+      }
+
+      function renderEmojiChoices() {
+        elements.emojiGrid.replaceChildren();
+        MOODS.forEach((mood) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "emoji-choice";
+          button.textContent = mood.emoji;
+          button.title = mood.label;
+          button.setAttribute("aria-label", mood.label);
+          button.setAttribute("aria-pressed", mood.emoji === selectedEmoji ? "true" : "false");
+          button.addEventListener("click", () => {
+            selectedEmoji = mood.emoji;
+            elements.emojiGrid.querySelectorAll(".emoji-choice").forEach((choice) => {
+              choice.setAttribute("aria-pressed", choice.textContent === selectedEmoji ? "true" : "false");
+            });
+            setQuote(selectedEmoji, "", "phone");
+            if (!elements.moodWord.value.trim()) elements.moodWord.placeholder = `e.g. ${mood.label}, brave, dreamy…`;
+            if (!elements.moodColor.dataset.touched) elements.moodColor.value = mood.color;
+          });
+          elements.emojiGrid.append(button);
+        });
+      }
+
+      function makeMoodId() {
+        if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+        return `mood-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      }
+
+      function submitMood(event) {
+        event.preventDefault();
+        const value = {
+          id: makeMoodId(),
+          date: elements.moodDate.value,
+          emoji: selectedEmoji,
+          color: elements.moodColor.value.toLowerCase(),
+          word: elements.moodWord.value.trim(),
+          summary: elements.moodSummary.value.trim(),
+          createdAt: new Date().toISOString()
+        };
+        const entry = validateEntry(value);
+        if (!entry) {
+          setPhoneFeedback("Add a valid date and a one-word mood before sending.", true);
+          return;
+        }
+        pendingMessages.set(entry.id, entry);
+        entries.push(entry);
+        renderPhoneEntries();
+        setQuote(entry.emoji, entry.word, "phone");
+        if (connection && connection.open) {
+          flushPendingMessages();
+          setPhoneFeedback("Sending your mood to your computer…");
+        } else {
+          setPhoneFeedback("Saved for this session. Reconnect to send it to your computer.");
+        }
+        elements.moodWord.value = "";
+        elements.moodSummary.value = "";
+      }
+
+      function startComputer() {
+        elements.phone.classList.add("hidden");
+        elements.computer.classList.remove("hidden");
+        entries = loadEntries();
+        renderCalendar();
+        renderSelectedEntries();
+        updateLatestQuote();
+        document.querySelector("#previous-month").addEventListener("click", () => {
+          visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1);
+          renderCalendar();
+        });
+        document.querySelector("#next-month").addEventListener("click", () => {
+          visibleMonth = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1);
+          renderCalendar();
+        });
+        elements.copyLink.addEventListener("click", async () => {
+          if (!elements.inviteLink.value) {
+            elements.qrNotice.textContent = "Your phone link isn't ready yet. Wait for the pairing code to load.";
+            elements.qrNotice.classList.remove("hidden");
+            return;
+          }
+          try {
+            await navigator.clipboard.writeText(elements.inviteLink.value);
+            elements.copyLink.textContent = "Copied!";
+            window.setTimeout(() => { elements.copyLink.textContent = "Copy"; }, 1600);
+          } catch (error) {
+            elements.qrNotice.textContent = `Couldn't copy the link: ${error.message}. You can select and copy it manually.`;
+            elements.qrNotice.classList.remove("hidden");
+          }
+        });
+        initializePeer();
+      }
+
+      function startPhone() {
+        elements.computer.classList.add("hidden");
+        elements.phone.classList.remove("hidden");
+        if (joinId) elements.phone.setAttribute("aria-label", `Phone mood entry connected to ${joinId}`);
+        elements.moodDate.value = localDate(new Date());
+        renderEmojiChoices();
+        renderPhoneEntries();
+        elements.moodColor.addEventListener("input", () => { elements.moodColor.dataset.touched = "true"; });
+        elements.moodForm.addEventListener("submit", submitMood);
+        initializePeer();
+      }
+
+      elements.reconnect.addEventListener("click", reconnect);
+      if (role === "computer") startComputer();
+      else startPhone();
+    })();
+  </script>
+</body>
+</html>
